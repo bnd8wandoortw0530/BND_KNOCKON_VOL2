@@ -13,9 +13,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Inter', 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .modal-blur { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .modal-blur { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .checkmark-done { text-decoration: line-through; opacity: 0.3; }
         .region-content { padding-top: 1.25rem !important; }
-        .checkmark-done { text-decoration: line-through; opacity: 0.4; }
     </style>
 </head>
 <body class="bg-[#F8FAFC] text-slate-900">
@@ -28,6 +28,8 @@
             "KRW": 0.024, "JPY": 0.21, "USD": 32.5, "IDR": 0.002, "MYR": 6.8,
             "HKD": 4.15, "SGD": 24.0, "THB": 0.88, "MXN": 1.9, "CAD": 23.5, "TWD": 1
         };
+
+        const PRESET_TODOS = ["護照", "手機", "錢包", "鑰匙", "手燈", "電池", "門票", "望遠鏡"];
 
         const tourData = [
             { id: 1, region: "韓國", city: "首爾", venue: "KSPO Dome", date: "2026-07-17", dateRange: "07/17–07/19", currency: "KRW" },
@@ -67,12 +69,12 @@
             const [form, setForm] = useState({ type: '', content: '', costTwd: '', costForeign: '', transportMode: '飛機', flightOut: '', flightBack: '', isDone: false });
 
             useEffect(() => {
-                const saved = localStorage.getItem('bnd-planner-v8');
+                const saved = localStorage.getItem('bnd-planner-v9');
                 if (saved) setPlans(JSON.parse(saved));
             }, []);
 
             useEffect(() => {
-                localStorage.setItem('bnd-planner-v8', JSON.stringify(plans));
+                localStorage.setItem('bnd-planner-v9', JSON.stringify(plans));
             }, [plans]);
 
             const currentTour = tourData.find(t => t.id === selectedId);
@@ -178,9 +180,17 @@
                                     <div className="text-3xl font-[900] italic tracking-tighter text-blue-400">TWD {totalTwd.toLocaleString()}</div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-3">
-                                    {[{l:'住宿', i:'fa-bed'}, {l:'交通', i:'fa-plane'}, {l:'追星清單', i:'fa-clipboard-check'}].map(btn => (
+                                <div className="grid grid-cols-2 gap-3 mb-3">
+                                    {[{l:'住宿', i:'fa-bed'}, {l:'交通', i:'fa-plane'}].map(btn => (
                                         <button key={btn.l} onClick={() => { setEditingId(null); setForm({ type: btn.l, content: '', costTwd: '', costForeign: '', transportMode: '飛機', flightOut: '', flightBack: '', isDone: false }); setShowModal(true); }} className="flex flex-col items-center justify-center bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:bg-blue-600 hover:text-white transition group">
+                                            <i className={`fas ${btn.i} mb-2 text-blue-600 group-hover:text-white transition text-lg`}></i>
+                                            <span className="text-[11px] font-black uppercase whitespace-nowrap">{btn.l}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[{l:'待辦', i:'fa-check-double'}, {l:'其他花費', i:'fa-comment-dollar'}].map(btn => (
+                                        <button key={btn.l} onClick={() => { setEditingId(null); setForm({ type: btn.l, content: '', costTwd: '', costForeign: '', transportMode: '其它', flightOut: '', flightBack: '', isDone: false }); setShowModal(true); }} className="flex flex-col items-center justify-center bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:bg-blue-600 hover:text-white transition group">
                                             <i className={`fas ${btn.i} mb-2 text-blue-600 group-hover:text-white transition text-lg`}></i>
                                             <span className="text-[11px] font-black uppercase whitespace-nowrap">{btn.l}</span>
                                         </button>
@@ -191,8 +201,8 @@
                                     {(plans[selectedId] || []).map(item => (
                                         <div key={item.id} onClick={() => { setEditingId(item.id); setForm(item); setShowModal(true); }} className="bg-white p-5 rounded-3xl flex justify-between items-center border border-slate-100 cursor-pointer hover:shadow-lg hover:border-blue-200 transition">
                                             <div className="flex items-start gap-4 flex-1">
-                                                {item.type === '追星清單' && (
-                                                    <div onClick={(e) => toggleDone(e, item.id)} className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center transition ${item.isDone ? 'bg-blue-600 border-blue-600' : 'border-slate-200'}`}>
+                                                {item.type === '待辦' && (
+                                                    <div onClick={(e) => toggleDone(e, item.id)} className={`mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${item.isDone ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
                                                         {item.isDone && <i className="fas fa-check text-[10px] text-white"></i>}
                                                     </div>
                                                 )}
@@ -201,12 +211,12 @@
                                                         <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase ${item.isDone ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>{item.type}</span>
                                                         {item.costTwd > 0 && <span className={`text-[10px] font-black tracking-tighter italic ${item.isDone ? 'text-slate-300' : 'text-slate-400'}`}>TWD {item.costTwd.toLocaleString()}</span>}
                                                     </div>
-                                                    <div className={`font-bold transition-all ${item.isDone ? 'checkmark-done text-slate-300' : 'text-slate-800'}`}>
+                                                    <div className={`font-bold text-base transition-all ${item.isDone ? 'checkmark-done text-slate-300' : 'text-slate-800'}`}>
                                                         {item.type === '交通' && item.transportMode === '飛機' ? `${item.flightOut} ✈ ${item.flightBack}` : item.content}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <i className="fas fa-pen text-slate-200 text-[10px]"></i>
+                                            <i className="fas fa-edit text-slate-200 text-[10px]"></i>
                                         </div>
                                     ))}
                                 </div>
@@ -231,6 +241,14 @@
                                         </div>
                                     )}
 
+                                    {form.type === '待辦' && !editingId && (
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {PRESET_TODOS.map(p => (
+                                                <button key={p} onClick={() => setForm({...form, content: p})} className="py-2 rounded-lg bg-slate-100 text-slate-500 font-bold text-[10px] hover:bg-blue-100 hover:text-blue-600 transition">{p}</button>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     {form.type === '交通' && form.transportMode === '飛機' ? (
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
@@ -249,21 +267,23 @@
                                         </div>
                                     )}
 
-                                    <div className="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100 space-y-4">
-                                        <div className="flex items-center">
-                                            <span className="w-20 text-[10px] font-black text-blue-600 uppercase tracking-widest">台幣 TWD</span>
-                                            <input type="number" className="flex-1 bg-transparent border-b-2 border-blue-200 outline-none font-black text-blue-600 p-1 text-right" placeholder="0" value={form.costTwd} onChange={e => updateCost(e.target.value, true)} />
+                                    {form.type !== '待辦' && (
+                                        <div className="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100 space-y-4">
+                                            <div className="flex items-center">
+                                                <span className="w-20 text-[10px] font-black text-blue-600 uppercase tracking-widest">台幣 TWD</span>
+                                                <input type="number" className="flex-1 bg-transparent border-b-2 border-blue-200 outline-none font-black text-blue-600 p-1 text-right" placeholder="0" value={form.costTwd} onChange={e => updateCost(e.target.value, true)} />
+                                            </div>
+                                            <div className="flex items-center">
+                                                <span className="w-20 text-[10px] font-black text-slate-400 uppercase tracking-widest">{currentTour.currency}</span>
+                                                <input type="number" className="flex-1 bg-transparent border-b-2 border-slate-200 outline-none font-black text-slate-500 p-1 text-right" placeholder="0" value={form.costForeign} onChange={e => updateCost(e.target.value, false)} />
+                                            </div>
                                         </div>
-                                        <div className="flex items-center">
-                                            <span className="w-20 text-[10px] font-black text-slate-400 uppercase tracking-widest">{currentTour.currency}</span>
-                                            <input type="number" className="flex-1 bg-transparent border-b-2 border-slate-200 outline-none font-black text-slate-500 p-1 text-right" placeholder="0" value={form.costForeign} onChange={e => updateCost(e.target.value, false)} />
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
 
                                 <div className="flex gap-4 mt-10">
                                     <button onClick={() => setShowModal(false)} className="flex-1 py-4 font-black text-slate-300 uppercase tracking-widest text-[11px]">關閉</button>
-                                    <button onClick={savePlan} className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-[900] shadow-xl shadow-blue-100 uppercase tracking-widest text-[11px]">儲存計畫</button>
+                                    <button onClick={savePlan} className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-[900] shadow-xl shadow-blue-100 uppercase tracking-widest text-[11px]">儲存</button>
                                 </div>
                             </div>
                         </div>
